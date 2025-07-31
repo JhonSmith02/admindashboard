@@ -1,15 +1,13 @@
 import sql from 'mssql';
 
 const config = {
-    user: 'root',
-    password: 'root',
+    user: 'usr_root',
+    password: 'usr_root',
     server: 'localhost',
     database: 'admindashboard',
     options: {
-        encrypt: false,
-        trustServerCertificate: true,
-        instanceName: 'SQLEXPRESS',
-        port: 1433
+        encrypt: true,
+        trustServerCertificate: true
     }
 };
 

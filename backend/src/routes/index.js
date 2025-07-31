@@ -1,5 +1,5 @@
 import express from 'express';
-import { conectar } from '../config/db.js';
+import { conectar } from '../config/db_local.js';
 
 const router = express.Router();
 
