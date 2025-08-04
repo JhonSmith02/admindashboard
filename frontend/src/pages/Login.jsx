@@ -52,7 +52,7 @@ export default function Login({ setUser }) {
                                     onChange={e => setRemember(e.target.checked)}
                                 />
                             }
-                            label="Remember me"
+                            label="Recordar usuario"
                         />
 
                         {error && (
