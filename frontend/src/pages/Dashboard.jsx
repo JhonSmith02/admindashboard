@@ -17,16 +17,24 @@ import {
   Avatar,
   Stack,
   Chip,
-  Tooltip
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import { 
   Delete, 
   Edit, 
-  Save, 
-  Cancel, 
   Person, 
   Assignment,
-  Task 
+  Task,
+  Add,
+  Close
 } from '@mui/icons-material';
 
 const Dashboard = () => {
@@ -61,50 +69,70 @@ const Dashboard = () => {
       task: 'Optimización',
       status: 'Activo',
       avatarColor: '#ffbe0b'
-    },
-    { 
-      id: 4, 
-      name: 'Jorge Martínez', 
-      email: 'jorge.martinez@empresa.com',
-      role: 'DevOps',
-      project: 'Infraestructura', 
-      task: 'Implementación CI/CD',
-      status: 'En vacaciones',
-      avatarColor: '#6a0572'
-    },
-    { 
-      id: 5, 
-      name: 'Lucía Fernández', 
-      email: 'lucia.fernandez@empresa.com',
-      role: 'Project Manager',
-      project: 'Gestión de Proyectos', 
-      task: 'Planificación Sprint',
-      status: 'Activo',
-      avatarColor: '#1a936f'
     }
   ]);
 
-  const [editingId, setEditingId] = useState(null);
-  const [editData, setEditData] = useState({ project: '', task: '' });
+  const [openModal, setOpenModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [newUser, setNewUser] = useState({
+    name: '',
+    email: '',
+    role: 'Desarrollador',
+    project: '',
+    task: '',
+    status: 'Activo',
+    avatarColor: getRandomColor()
+  });
 
-  // Manejar edición
-  const handleEditClick = (user) => {
-    setEditingId(user.id);
-    setEditData({ project: user.project, task: user.task });
+  // Generar color aleatorio para avatares
+  function getRandomColor() {
+    const colors = ['#ff6b6b', '#4ecdc4', '#ffbe0b', '#6a0572', '#1a936f', '#3a86ff'];
+    return colors[Math.floor(Math.random() * colors.length)];
+  }
+
+  // Abrir modal para edición
+  const handleOpenEditModal = (user) => {
+    setCurrentUser({ ...user });
+    setOpenModal(true);
   };
 
-  // Guardar cambios
-  const handleSaveClick = (id) => {
-    setUsers(users.map(user => 
-      user.id === id ? { ...user, project: editData.project, task: editData.task } : user
-    ));
-    setEditingId(null);
+  // Abrir modal para creación
+  const handleOpenCreateModal = () => {
+    setCurrentUser(null);
+    setNewUser({
+      name: '',
+      email: '',
+      role: 'Desarrollador',
+      project: '',
+      task: '',
+      status: 'Activo',
+      avatarColor: getRandomColor()
+    });
+    setOpenModal(true);
   };
 
-  // Cancelar edición
-  const handleCancelClick = () => {
-    setEditingId(null);
+  // Cerrar modal
+  const handleCloseModal = () => {
+    setOpenModal(false);
+  };
+
+  // Guardar cambios (tanto para edición como creación)
+  const handleSave = () => {
+    if (currentUser) {
+      // Actualizar usuario existente
+      setUsers(users.map(user => 
+        user.id === currentUser.id ? currentUser : user
+      ));
+    } else {
+      // Crear nuevo usuario
+      const newUserWithId = {
+        ...newUser,
+        id: Math.max(...users.map(u => u.id), 0) + 1
+      };
+      setUsers([...users, newUserWithId]);
+    }
+    setOpenModal(false);
   };
 
   // Eliminar usuario
@@ -112,10 +140,16 @@ const Dashboard = () => {
     setUsers(users.filter(user => user.id !== id));
   };
 
-  // Actualizar campos editables
-  const handleChange = (e) => {
+  // Manejar cambios en formulario de edición
+  const handleEditChange = (e) => {
     const { name, value } = e.target;
-    setEditData(prev => ({ ...prev, [name]: value }));
+    setCurrentUser(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Manejar cambios en formulario de creación
+  const handleCreateChange = (e) => {
+    const { name, value } = e.target;
+    setNewUser(prev => ({ ...prev, [name]: value }));
   };
 
   // Filtrar usuarios por búsqueda
@@ -165,23 +199,33 @@ const Dashboard = () => {
             </Paper>
           </Stack>
           
-          <TextField
-            variant="outlined"
-            placeholder="Buscar usuarios, proyectos o tareas..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{ width: 350 }}
-            InputProps={{
-              startAdornment: (
-                <Box sx={{ color: 'action.active', mr: 1 }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                  </svg>
-                </Box>
-              ),
-            }}
-          />
+          <Stack direction="row" spacing={2}>
+            <TextField
+              variant="outlined"
+              placeholder="Buscar usuarios, proyectos o tareas..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              sx={{ width: 350 }}
+              InputProps={{
+                startAdornment: (
+                  <Box sx={{ color: 'action.active', mr: 1 }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                  </Box>
+                ),
+              }}
+            />
+            <Button 
+              variant="contained" 
+              startIcon={<Add />}
+              onClick={handleOpenCreateModal}
+              sx={{ height: 56 }}
+            >
+              Crear Usuario
+            </Button>
+          </Stack>
         </Box>
 
         {/* Tabla de Usuarios */}
@@ -214,48 +258,20 @@ const Dashboard = () => {
                     </Box>
                   </TableCell>
                   
-                  {/* Columna Proyecto (editable) */}
+                  {/* Columna Proyecto */}
                   <TableCell>
-                    {editingId === user.id ? (
-                      <TextField
-                        name="project"
-                        value={editData.project}
-                        onChange={handleChange}
-                        fullWidth
-                        InputProps={{
-                          startAdornment: (
-                            <Assignment sx={{ color: 'action.active', mr: 1 }} />
-                          ),
-                        }}
-                      />
-                    ) : (
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Assignment sx={{ color: 'primary.main', mr: 1 }} />
-                        <Typography>{user.project}</Typography>
-                      </Box>
-                    )}
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Assignment sx={{ color: 'primary.main', mr: 1 }} />
+                      <Typography>{user.project}</Typography>
+                    </Box>
                   </TableCell>
                   
-                  {/* Columna Tarea (editable) */}
+                  {/* Columna Tarea */}
                   <TableCell>
-                    {editingId === user.id ? (
-                      <TextField
-                        name="task"
-                        value={editData.task}
-                        onChange={handleChange}
-                        fullWidth
-                        InputProps={{
-                          startAdornment: (
-                            <Task sx={{ color: 'action.active', mr: 1 }} />
-                          ),
-                        }}
-                      />
-                    ) : (
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Task sx={{ color: 'secondary.main', mr: 1 }} />
-                        <Typography>{user.task}</Typography>
-                      </Box>
-                    )}
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Task sx={{ color: 'secondary.main', mr: 1 }} />
+                      <Typography>{user.task}</Typography>
+                    </Box>
                   </TableCell>
                   
                   {/* Columna Estado */}
@@ -270,49 +286,26 @@ const Dashboard = () => {
                   
                   {/* Columna Acciones */}
                   <TableCell align="center">
-                    {editingId === user.id ? (
-                      <Stack direction="row" justifyContent="center" spacing={1}>
-                        <Tooltip title="Guardar cambios">
-                          <IconButton 
-                            onClick={() => handleSaveClick(user.id)} 
-                            color="success"
-                            sx={{ bgcolor: 'rgba(46, 204, 113, 0.1)', '&:hover': { bgcolor: 'rgba(46, 204, 113, 0.2)' } }}
-                          >
-                            <Save />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Cancelar edición">
-                          <IconButton 
-                            onClick={handleCancelClick} 
-                            color="warning"
-                            sx={{ bgcolor: 'rgba(241, 196, 15, 0.1)', '&:hover': { bgcolor: 'rgba(241, 196, 15, 0.2)' } }}
-                          >
-                            <Cancel />
-                          </IconButton>
-                        </Tooltip>
-                      </Stack>
-                    ) : (
-                      <Stack direction="row" justifyContent="center" spacing={1}>
-                        <Tooltip title="Editar asignación">
-                          <IconButton 
-                            onClick={() => handleEditClick(user)} 
-                            color="primary"
-                            sx={{ bgcolor: 'rgba(52, 152, 219, 0.1)', '&:hover': { bgcolor: 'rgba(52, 152, 219, 0.2)' } }}
-                          >
-                            <Edit />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Eliminar usuario">
-                          <IconButton 
-                            onClick={() => handleDelete(user.id)} 
-                            color="error"
-                            sx={{ bgcolor: 'rgba(231, 76, 60, 0.1)', '&:hover': { bgcolor: 'rgba(231, 76, 60, 0.2)' } }}
-                          >
-                            <Delete />
-                          </IconButton>
-                        </Tooltip>
-                      </Stack>
-                    )}
+                    <Stack direction="row" justifyContent="center" spacing={1}>
+                      <Tooltip title="Editar usuario">
+                        <IconButton 
+                          onClick={() => handleOpenEditModal(user)} 
+                          color="primary"
+                          sx={{ bgcolor: 'rgba(52, 152, 219, 0.1)', '&:hover': { bgcolor: 'rgba(52, 152, 219, 0.2)' } }}
+                        >
+                          <Edit />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Eliminar usuario">
+                        <IconButton 
+                          onClick={() => handleDelete(user.id)} 
+                          color="error"
+                          sx={{ bgcolor: 'rgba(231, 76, 60, 0.1)', '&:hover': { bgcolor: 'rgba(231, 76, 60, 0.2)' } }}
+                        >
+                          <Delete />
+                        </IconButton>
+                      </Tooltip>
+                    </Stack>
                   </TableCell>
                 </TableRow>
               ))}
@@ -339,6 +332,158 @@ const Dashboard = () => {
           Panel de Gestión • Versión 1.0 • {new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </Typography>
       </Box>
+
+      {/* Modal para edición/creación de usuarios */}
+      <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {currentUser ? 'Editar Usuario' : 'Crear Nuevo Usuario'}
+          <IconButton onClick={handleCloseModal}>
+            <Close />
+          </IconButton>
+        </DialogTitle>
+        
+        <DialogContent dividers sx={{ pt: 2 }}>
+          <Stack spacing={3} sx={{ mt: 1 }}>
+            {currentUser ? (
+              // Formulario de edición
+              <>
+                <TextField
+                  label="Nombre completo"
+                  name="name"
+                  value={currentUser.name}
+                  onChange={handleEditChange}
+                  fullWidth
+                  margin="normal"
+                />
+                <TextField
+                  label="Email"
+                  name="email"
+                  value={currentUser.email}
+                  onChange={handleEditChange}
+                  fullWidth
+                  margin="normal"
+                />
+                <TextField
+                  label="Rol"
+                  name="role"
+                  value={currentUser.role}
+                  onChange={handleEditChange}
+                  fullWidth
+                  margin="normal"
+                />
+                <TextField
+                  label="Proyecto"
+                  name="project"
+                  value={currentUser.project}
+                  onChange={handleEditChange}
+                  fullWidth
+                  margin="normal"
+                />
+                <TextField
+                  label="Tarea"
+                  name="task"
+                  value={currentUser.task}
+                  onChange={handleEditChange}
+                  fullWidth
+                  margin="normal"
+                />
+                <FormControl fullWidth margin="normal">
+                  <InputLabel>Estado</InputLabel>
+                  <Select
+                    name="status"
+                    value={currentUser.status}
+                    onChange={handleEditChange}
+                    label="Estado"
+                  >
+                    <MenuItem value="Activo">Activo</MenuItem>
+                    <MenuItem value="Inactivo">Inactivo</MenuItem>
+                    <MenuItem value="En vacaciones">En vacaciones</MenuItem>
+                    <MenuItem value="En licencia">En licencia</MenuItem>
+                  </Select>
+                </FormControl>
+              </>
+            ) : (
+              // Formulario de creación
+              <>
+                <TextField
+                  label="Nombre completo"
+                  name="name"
+                  value={newUser.name}
+                  onChange={handleCreateChange}
+                  fullWidth
+                  margin="normal"
+                  required
+                />
+                <TextField
+                  label="Email"
+                  name="email"
+                  value={newUser.email}
+                  onChange={handleCreateChange}
+                  fullWidth
+                  margin="normal"
+                  required
+                />
+                <FormControl fullWidth margin="normal">
+                  <InputLabel>Rol</InputLabel>
+                  <Select
+                    name="role"
+                    value={newUser.role}
+                    onChange={handleCreateChange}
+                    label="Rol"
+                  >
+                    <MenuItem value="Desarrollador">Desarrollador</MenuItem>
+                    <MenuItem value="Diseñador">Diseñador</MenuItem>
+                    <MenuItem value="QA Tester">QA Tester</MenuItem>
+                    <MenuItem value="Project Manager">Project Manager</MenuItem>
+                    <MenuItem value="DevOps">DevOps</MenuItem>
+                  </Select>
+                </FormControl>
+                <TextField
+                  label="Proyecto"
+                  name="project"
+                  value={newUser.project}
+                  onChange={handleCreateChange}
+                  fullWidth
+                  margin="normal"
+                  required
+                />
+                <TextField
+                  label="Tarea"
+                  name="task"
+                  value={newUser.task}
+                  onChange={handleCreateChange}
+                  fullWidth
+                  margin="normal"
+                  required
+                />
+                <FormControl fullWidth margin="normal">
+                  <InputLabel>Estado</InputLabel>
+                  <Select
+                    name="status"
+                    value={newUser.status}
+                    onChange={handleCreateChange}
+                    label="Estado"
+                  >
+                    <MenuItem value="Activo">Activo</MenuItem>
+                    <MenuItem value="Inactivo">Inactivo</MenuItem>
+                    <MenuItem value="En vacaciones">En vacaciones</MenuItem>
+                    <MenuItem value="En licencia">En licencia</MenuItem>
+                  </Select>
+                </FormControl>
+              </>
+            )}
+          </Stack>
+        </DialogContent>
+        
+        <DialogActions sx={{ p: 3 }}>
+          <Button onClick={handleCloseModal} variant="outlined" color="inherit">
+            Cancelar
+          </Button>
+          <Button onClick={handleSave} variant="contained" color="primary">
+            {currentUser ? 'Actualizar Usuario' : 'Crear Usuario'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
