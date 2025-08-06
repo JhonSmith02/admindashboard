@@ -15,8 +15,8 @@ export default function App() {
         ? <Login setUser={setUser} />
         : <div>Bienvenido, {user.name}</div>
       } */}
-      {/* <Dashboard/> */}
-      <Board/>
+      <Dashboard/>
+      {/* <Board/> */}
     </div>
   );
 }

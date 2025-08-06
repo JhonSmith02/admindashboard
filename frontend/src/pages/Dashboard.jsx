@@ -1,5 +1,4 @@
-// src/pages/dashboard.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -36,6 +35,46 @@ import {
   Add,
   Close
 } from '@mui/icons-material';
+
+// Fondo animado - componente separado que no afecta al dashboard
+const AnimatedBackground = () => {
+  useEffect(() => {
+    // Aplicar estilos al body
+    document.body.style.margin = '0';
+    document.body.style.padding = '0';
+    document.body.style.background = 'linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab)';
+    document.body.style.backgroundSize = '400% 400%';
+    document.body.style.animation = 'gradient 15s ease infinite';
+    document.body.style.minHeight = '100vh';
+    
+    // Crear la animación
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes gradient {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      // Limpiar al desmontar
+      document.body.style.background = '';
+      document.body.style.backgroundSize = '';
+      document.body.style.animation = '';
+      document.head.removeChild(style);
+    };
+  }, []);
+
+  return null; // Este componente no renderiza nada visible
+};
 
 const Dashboard = () => {
   // Estado inicial de usuarios
@@ -82,7 +121,7 @@ const Dashboard = () => {
     project: '',
     task: '',
     status: 'Activo',
-    avatarColor: getRandomColor()
+    avatarColor: '#3a86ff'
   });
 
   // Generar color aleatorio para avatares
@@ -160,331 +199,334 @@ const Dashboard = () => {
   );
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Paper elevation={3} sx={{ borderRadius: 3, overflow: 'hidden' }}>
-        {/* Encabezado del Dashboard */}
-        <Box sx={{ 
-          bgcolor: 'primary.main', 
-          color: 'white', 
-          p: 3, 
-          display: 'flex', 
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <Box>
-            <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
-              Panel de Gestión de Usuarios
-            </Typography>
-            <Typography variant="subtitle1" sx={{ opacity: 0.9, mt: 1 }}>
-              Administra los usuarios, sus proyectos y tareas asignadas
-            </Typography>
-          </Box>
-          <Avatar sx={{ bgcolor: 'white', color: 'primary.main', width: 56, height: 56 }}>
-            <Person sx={{ fontSize: 32 }} />
-          </Avatar>
-        </Box>
-
-        {/* Estadísticas y Búsqueda */}
-        <Box sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: '#f8f9fa' }}>
-          <Stack direction="row" spacing={2}>
-            <Paper sx={{ p: 2, minWidth: 180, textAlign: 'center' }}>
-              <Typography variant="h6" color="text.secondary">Total Usuarios</Typography>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', mt: 1 }}>{users.length}</Typography>
-            </Paper>
-            <Paper sx={{ p: 2, minWidth: 180, textAlign: 'center' }}>
-              <Typography variant="h6" color="text.secondary">Activos</Typography>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', mt: 1 }} color="success.main">
-                {users.filter(u => u.status === 'Activo').length}
+    <>
+      <AnimatedBackground />
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Paper elevation={3} sx={{ borderRadius: 3, overflow: 'hidden' }}>
+          {/* Encabezado del Dashboard */}
+          <Box sx={{ 
+            bgcolor: 'primary.main', 
+            color: 'white', 
+            p: 3, 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <Box>
+              <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
+                Panel de Gestión de Usuarios
               </Typography>
-            </Paper>
-          </Stack>
+              <Typography variant="subtitle1" sx={{ opacity: 0.9, mt: 1 }}>
+                Administra los usuarios, sus proyectos y tareas asignadas
+              </Typography>
+            </Box>
+            <Avatar sx={{ bgcolor: 'white', color: 'primary.main', width: 56, height: 56 }}>
+              <Person sx={{ fontSize: 32 }} />
+            </Avatar>
+          </Box>
+
+          {/* Estadísticas y Búsqueda */}
+          <Box sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: '#f8f9fa' }}>
+            <Stack direction="row" spacing={2}>
+              <Paper sx={{ p: 2, minWidth: 180, textAlign: 'center' }}>
+                <Typography variant="h6" color="text.secondary">Total Usuarios</Typography>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mt: 1 }}>{users.length}</Typography>
+              </Paper>
+              <Paper sx={{ p: 2, minWidth: 180, textAlign: 'center' }}>
+                <Typography variant="h6" color="text.secondary">Activos</Typography>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mt: 1 }} color="success.main">
+                  {users.filter(u => u.status === 'Activo').length}
+                </Typography>
+              </Paper>
+            </Stack>
+            
+            <Stack direction="row" spacing={2}>
+              <TextField
+                variant="outlined"
+                placeholder="Buscar usuarios, proyectos o tareas..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                sx={{ width: 350 }}
+                InputProps={{
+                  startAdornment: (
+                    <Box sx={{ color: 'action.active', mr: 1 }}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      </svg>
+                    </Box>
+                  ),
+                }}
+              />
+              <Button 
+                variant="contained" 
+                startIcon={<Add />}
+                onClick={handleOpenCreateModal}
+                sx={{ height: 56 }}
+              >
+                Crear Usuario
+              </Button>
+            </Stack>
+          </Box>
+
+          {/* Tabla de Usuarios */}
+          <TableContainer component={Paper} sx={{ borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
+            <Table sx={{ minWidth: 1000 }}>
+              <TableHead>
+                <TableRow sx={{ bgcolor: '#f8f9fa' }}>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Usuario</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Proyecto</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Tarea</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Estado</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem', textAlign: 'center' }}>Acciones</TableCell>
+                </TableRow>
+              </TableHead>
+              
+              <TableBody>
+                {filteredUsers.map((user) => (
+                  <TableRow key={user.id} hover>
+                    {/* Columna Usuario */}
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Avatar sx={{ bgcolor: user.avatarColor, mr: 2, width: 40, height: 40 }}>
+                          {user.name.charAt(0)}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>{user.name}</Typography>
+                          <Typography variant="body2" color="text.secondary">{user.email}</Typography>
+                          <Typography variant="body2" color="text.secondary">{user.role}</Typography>
+                        </Box>
+                      </Box>
+                    </TableCell>
+                    
+                    {/* Columna Proyecto */}
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Assignment sx={{ color: 'primary.main', mr: 1 }} />
+                        <Typography>{user.project}</Typography>
+                      </Box>
+                    </TableCell>
+                    
+                    {/* Columna Tarea */}
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Task sx={{ color: 'secondary.main', mr: 1 }} />
+                        <Typography>{user.task}</Typography>
+                      </Box>
+                    </TableCell>
+                    
+                    {/* Columna Estado */}
+                    <TableCell>
+                      <Chip 
+                        label={user.status} 
+                        color={user.status === 'Activo' ? 'success' : 'warning'} 
+                        variant="outlined"
+                        sx={{ fontWeight: 'bold' }}
+                      />
+                    </TableCell>
+                    
+                    {/* Columna Acciones */}
+                    <TableCell align="center">
+                      <Stack direction="row" justifyContent="center" spacing={1}>
+                        <Tooltip title="Editar usuario">
+                          <IconButton 
+                            onClick={() => handleOpenEditModal(user)} 
+                            color="primary"
+                            sx={{ bgcolor: 'rgba(52, 152, 219, 0.1)', '&:hover': { bgcolor: 'rgba(52, 152, 219, 0.2)' } }}
+                          >
+                            <Edit />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Eliminar usuario">
+                          <IconButton 
+                            onClick={() => handleDelete(user.id)} 
+                            color="error"
+                            sx={{ bgcolor: 'rgba(231, 76, 60, 0.1)', '&:hover': { bgcolor: 'rgba(231, 76, 60, 0.2)' } }}
+                          >
+                            <Delete />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
           
-          <Stack direction="row" spacing={2}>
-            <TextField
-              variant="outlined"
-              placeholder="Buscar usuarios, proyectos o tareas..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              sx={{ width: 350 }}
-              InputProps={{
-                startAdornment: (
-                  <Box sx={{ color: 'action.active', mr: 1 }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="11" cy="11" r="8"></circle>
-                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                  </Box>
-                ),
-              }}
-            />
-            <Button 
-              variant="contained" 
-              startIcon={<Add />}
-              onClick={handleOpenCreateModal}
-              sx={{ height: 56 }}
-            >
-              Crear Usuario
-            </Button>
-          </Stack>
+          {/* Mensaje cuando no hay resultados */}
+          {filteredUsers.length === 0 && (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Typography variant="h6" color="text.secondary">
+                No se encontraron usuarios que coincidan con tu búsqueda
+              </Typography>
+              <Button variant="outlined" sx={{ mt: 2 }} onClick={() => setSearchTerm('')}>
+                Limpiar búsqueda
+              </Button>
+            </Box>
+          )}
+        </Paper>
+
+        {/* Pie de página */}
+        <Box sx={{ mt: 3, textAlign: 'center', color: 'text.secondary' }}>
+          <Typography variant="body2">
+            Panel de Gestión • Versión 1.0 • {new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </Typography>
         </Box>
 
-        {/* Tabla de Usuarios */}
-        <TableContainer component={Paper} sx={{ borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
-          <Table sx={{ minWidth: 1000 }}>
-            <TableHead>
-              <TableRow sx={{ bgcolor: '#f8f9fa' }}>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Usuario</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Proyecto</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Tarea</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Estado</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem', textAlign: 'center' }}>Acciones</TableCell>
-              </TableRow>
-            </TableHead>
-            
-            <TableBody>
-              {filteredUsers.map((user) => (
-                <TableRow key={user.id} hover>
-                  {/* Columna Usuario */}
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Avatar sx={{ bgcolor: user.avatarColor, mr: 2, width: 40, height: 40 }}>
-                        {user.name.charAt(0)}
-                      </Avatar>
-                      <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>{user.name}</Typography>
-                        <Typography variant="body2" color="text.secondary">{user.email}</Typography>
-                        <Typography variant="body2" color="text.secondary">{user.role}</Typography>
-                      </Box>
-                    </Box>
-                  </TableCell>
-                  
-                  {/* Columna Proyecto */}
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Assignment sx={{ color: 'primary.main', mr: 1 }} />
-                      <Typography>{user.project}</Typography>
-                    </Box>
-                  </TableCell>
-                  
-                  {/* Columna Tarea */}
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Task sx={{ color: 'secondary.main', mr: 1 }} />
-                      <Typography>{user.task}</Typography>
-                    </Box>
-                  </TableCell>
-                  
-                  {/* Columna Estado */}
-                  <TableCell>
-                    <Chip 
-                      label={user.status} 
-                      color={user.status === 'Activo' ? 'success' : 'warning'} 
-                      variant="outlined"
-                      sx={{ fontWeight: 'bold' }}
-                    />
-                  </TableCell>
-                  
-                  {/* Columna Acciones */}
-                  <TableCell align="center">
-                    <Stack direction="row" justifyContent="center" spacing={1}>
-                      <Tooltip title="Editar usuario">
-                        <IconButton 
-                          onClick={() => handleOpenEditModal(user)} 
-                          color="primary"
-                          sx={{ bgcolor: 'rgba(52, 152, 219, 0.1)', '&:hover': { bgcolor: 'rgba(52, 152, 219, 0.2)' } }}
-                        >
-                          <Edit />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Eliminar usuario">
-                        <IconButton 
-                          onClick={() => handleDelete(user.id)} 
-                          color="error"
-                          sx={{ bgcolor: 'rgba(231, 76, 60, 0.1)', '&:hover': { bgcolor: 'rgba(231, 76, 60, 0.2)' } }}
-                        >
-                          <Delete />
-                        </IconButton>
-                      </Tooltip>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        
-        {/* Mensaje cuando no hay resultados */}
-        {filteredUsers.length === 0 && (
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Typography variant="h6" color="text.secondary">
-              No se encontraron usuarios que coincidan con tu búsqueda
-            </Typography>
-            <Button variant="outlined" sx={{ mt: 2 }} onClick={() => setSearchTerm('')}>
-              Limpiar búsqueda
-            </Button>
-          </Box>
-        )}
-      </Paper>
-
-      {/* Pie de página */}
-      <Box sx={{ mt: 3, textAlign: 'center', color: 'text.secondary' }}>
-        <Typography variant="body2">
-          Panel de Gestión • Versión 1.0 • {new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-        </Typography>
-      </Box>
-
-      {/* Modal para edición/creación de usuarios */}
-      <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          {currentUser ? 'Editar Usuario' : 'Crear Nuevo Usuario'}
-          <IconButton onClick={handleCloseModal}>
-            <Close />
-          </IconButton>
-        </DialogTitle>
-        
-        <DialogContent dividers sx={{ pt: 2 }}>
-          <Stack spacing={3} sx={{ mt: 1 }}>
-            {currentUser ? (
-              // Formulario de edición
-              <>
-                <TextField
-                  label="Nombre completo"
-                  name="name"
-                  value={currentUser.name}
-                  onChange={handleEditChange}
-                  fullWidth
-                  margin="normal"
-                />
-                <TextField
-                  label="Email"
-                  name="email"
-                  value={currentUser.email}
-                  onChange={handleEditChange}
-                  fullWidth
-                  margin="normal"
-                />
-                <TextField
-                  label="Rol"
-                  name="role"
-                  value={currentUser.role}
-                  onChange={handleEditChange}
-                  fullWidth
-                  margin="normal"
-                />
-                <TextField
-                  label="Proyecto"
-                  name="project"
-                  value={currentUser.project}
-                  onChange={handleEditChange}
-                  fullWidth
-                  margin="normal"
-                />
-                <TextField
-                  label="Tarea"
-                  name="task"
-                  value={currentUser.task}
-                  onChange={handleEditChange}
-                  fullWidth
-                  margin="normal"
-                />
-                <FormControl fullWidth margin="normal">
-                  <InputLabel>Estado</InputLabel>
-                  <Select
-                    name="status"
-                    value={currentUser.status}
+        {/* Modal para edición/creación de usuarios */}
+        <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth="sm">
+          <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {currentUser ? 'Editar Usuario' : 'Crear Nuevo Usuario'}
+            <IconButton onClick={handleCloseModal}>
+              <Close />
+            </IconButton>
+          </DialogTitle>
+          
+          <DialogContent dividers sx={{ pt: 2 }}>
+            <Stack spacing={3} sx={{ mt: 1 }}>
+              {currentUser ? (
+                // Formulario de edición
+                <>
+                  <TextField
+                    label="Nombre completo"
+                    name="name"
+                    value={currentUser.name}
                     onChange={handleEditChange}
-                    label="Estado"
-                  >
-                    <MenuItem value="Activo">Activo</MenuItem>
-                    <MenuItem value="Inactivo">Inactivo</MenuItem>
-                    <MenuItem value="En vacaciones">En vacaciones</MenuItem>
-                    <MenuItem value="En licencia">En licencia</MenuItem>
-                  </Select>
-                </FormControl>
-              </>
-            ) : (
-              // Formulario de creación
-              <>
-                <TextField
-                  label="Nombre completo"
-                  name="name"
-                  value={newUser.name}
-                  onChange={handleCreateChange}
-                  fullWidth
-                  margin="normal"
-                  required
-                />
-                <TextField
-                  label="Email"
-                  name="email"
-                  value={newUser.email}
-                  onChange={handleCreateChange}
-                  fullWidth
-                  margin="normal"
-                  required
-                />
-                <FormControl fullWidth margin="normal">
-                  <InputLabel>Rol</InputLabel>
-                  <Select
-                    name="role"
-                    value={newUser.role}
-                    onChange={handleCreateChange}
+                    fullWidth
+                    margin="normal"
+                  />
+                  <TextField
+                    label="Email"
+                    name="email"
+                    value={currentUser.email}
+                    onChange={handleEditChange}
+                    fullWidth
+                    margin="normal"
+                  />
+                  <TextField
                     label="Rol"
-                  >
-                    <MenuItem value="Desarrollador">Desarrollador</MenuItem>
-                    <MenuItem value="Diseñador">Diseñador</MenuItem>
-                    <MenuItem value="QA Tester">QA Tester</MenuItem>
-                    <MenuItem value="Project Manager">Project Manager</MenuItem>
-                    <MenuItem value="DevOps">DevOps</MenuItem>
-                  </Select>
-                </FormControl>
-                <TextField
-                  label="Proyecto"
-                  name="project"
-                  value={newUser.project}
-                  onChange={handleCreateChange}
-                  fullWidth
-                  margin="normal"
-                  required
-                />
-                <TextField
-                  label="Tarea"
-                  name="task"
-                  value={newUser.task}
-                  onChange={handleCreateChange}
-                  fullWidth
-                  margin="normal"
-                  required
-                />
-                <FormControl fullWidth margin="normal">
-                  <InputLabel>Estado</InputLabel>
-                  <Select
-                    name="status"
-                    value={newUser.status}
+                    name="role"
+                    value={currentUser.role}
+                    onChange={handleEditChange}
+                    fullWidth
+                    margin="normal"
+                  />
+                  <TextField
+                    label="Proyecto"
+                    name="project"
+                    value={currentUser.project}
+                    onChange={handleEditChange}
+                    fullWidth
+                    margin="normal"
+                  />
+                  <TextField
+                    label="Tarea"
+                    name="task"
+                    value={currentUser.task}
+                    onChange={handleEditChange}
+                    fullWidth
+                    margin="normal"
+                  />
+                  <FormControl fullWidth margin="normal">
+                    <InputLabel>Estado</InputLabel>
+                    <Select
+                      name="status"
+                      value={currentUser.status}
+                      onChange={handleEditChange}
+                      label="Estado"
+                    >
+                      <MenuItem value="Activo">Activo</MenuItem>
+                      <MenuItem value="Inactivo">Inactivo</MenuItem>
+                      <MenuItem value="En vacaciones">En vacaciones</MenuItem>
+                      <MenuItem value="En licencia">En licencia</MenuItem>
+                    </Select>
+                  </FormControl>
+                </>
+              ) : (
+                // Formulario de creación
+                <>
+                  <TextField
+                    label="Nombre completo"
+                    name="name"
+                    value={newUser.name}
                     onChange={handleCreateChange}
-                    label="Estado"
-                  >
-                    <MenuItem value="Activo">Activo</MenuItem>
-                    <MenuItem value="Inactivo">Inactivo</MenuItem>
-                    <MenuItem value="En vacaciones">En vacaciones</MenuItem>
-                    <MenuItem value="En licencia">En licencia</MenuItem>
-                  </Select>
-                </FormControl>
-              </>
-            )}
-          </Stack>
-        </DialogContent>
-        
-        <DialogActions sx={{ p: 3 }}>
-          <Button onClick={handleCloseModal} variant="outlined" color="inherit">
-            Cancelar
-          </Button>
-          <Button onClick={handleSave} variant="contained" color="primary">
-            {currentUser ? 'Actualizar Usuario' : 'Crear Usuario'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
+                    fullWidth
+                    margin="normal"
+                    required
+                  />
+                  <TextField
+                    label="Email"
+                    name="email"
+                    value={newUser.email}
+                    onChange={handleCreateChange}
+                    fullWidth
+                    margin="normal"
+                    required
+                  />
+                  <FormControl fullWidth margin="normal">
+                    <InputLabel>Rol</InputLabel>
+                    <Select
+                      name="role"
+                      value={newUser.role}
+                      onChange={handleCreateChange}
+                      label="Rol"
+                    >
+                      <MenuItem value="Desarrollador">Desarrollador</MenuItem>
+                      <MenuItem value="Diseñador">Diseñador</MenuItem>
+                      <MenuItem value="QA Tester">QA Tester</MenuItem>
+                      <MenuItem value="Project Manager">Project Manager</MenuItem>
+                      <MenuItem value="DevOps">DevOps</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <TextField
+                    label="Proyecto"
+                    name="project"
+                    value={newUser.project}
+                    onChange={handleCreateChange}
+                    fullWidth
+                    margin="normal"
+                    required
+                  />
+                  <TextField
+                    label="Tarea"
+                    name="task"
+                    value={newUser.task}
+                    onChange={handleCreateChange}
+                    fullWidth
+                    margin="normal"
+                    required
+                  />
+                  <FormControl fullWidth margin="normal">
+                    <InputLabel>Estado</InputLabel>
+                    <Select
+                      name="status"
+                      value={newUser.status}
+                      onChange={handleCreateChange}
+                      label="Estado"
+                    >
+                      <MenuItem value="Activo">Activo</MenuItem>
+                      <MenuItem value="Inactivo">Inactivo</MenuItem>
+                      <MenuItem value="En vacaciones">En vacaciones</MenuItem>
+                      <MenuItem value="En licencia">En licencia</MenuItem>
+                    </Select>
+                  </FormControl>
+                </>
+              )}
+            </Stack>
+          </DialogContent>
+          
+          <DialogActions sx={{ p: 3 }}>
+            <Button onClick={handleCloseModal} variant="outlined" color="inherit">
+              Cancelar
+            </Button>
+            <Button onClick={handleSave} variant="contained" color="primary">
+              {currentUser ? 'Actualizar Usuario' : 'Crear Usuario'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Container>
+    </>
   );
 };
 
