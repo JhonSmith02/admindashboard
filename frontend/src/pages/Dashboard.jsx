@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
+import BackgroundAnimado from '../components/dashboard/BackgroundAnimado'
 import {
   Box,
   Container,
@@ -24,7 +25,11 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  List,
+  ListItem,
+  ListItemText,
+  Divider
 } from '@mui/material';
 import { 
   Delete, 
@@ -33,48 +38,11 @@ import {
   Assignment,
   Task,
   Add,
-  Close
+  Close,
+  Warning,
+  Group,
+  Category
 } from '@mui/icons-material';
-
-// Fondo animado - componente separado que no afecta al dashboard
-const AnimatedBackground = () => {
-  useEffect(() => {
-    // Aplicar estilos al body
-    document.body.style.margin = '0';
-    document.body.style.padding = '0';
-    document.body.style.background = 'linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab)';
-    document.body.style.backgroundSize = '400% 400%';
-    document.body.style.animation = 'gradient 15s ease infinite';
-    document.body.style.minHeight = '100vh';
-    
-    // Crear la animación
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes gradient {
-        0% {
-          background-position: 0% 50%;
-        }
-        50% {
-          background-position: 100% 50%;
-        }
-        100% {
-          background-position: 0% 50%;
-        }
-      }
-    `;
-    document.head.appendChild(style);
-    
-    return () => {
-      // Limpiar al desmontar
-      document.body.style.background = '';
-      document.body.style.backgroundSize = '';
-      document.body.style.animation = '';
-      document.head.removeChild(style);
-    };
-  }, []);
-
-  return null; // Este componente no renderiza nada visible
-};
 
 const Dashboard = () => {
   // Estado inicial de usuarios
@@ -111,13 +79,32 @@ const Dashboard = () => {
     }
   ]);
 
+  // Estado para roles disponibles
+  const [roles, setRoles] = useState([
+    'Desarrollador Frontend',
+    'QA Tester',
+    'DBA',
+    'Project Manager',
+    'Diseñador UI/UX',
+    'DevOps Engineer'
+  ]);
+
+  // Estados para modales
   const [openModal, setOpenModal] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [rolesModalOpen, setRolesModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [userToDelete, setUserToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Estado para nuevo rol
+  const [newRole, setNewRole] = useState('');
+
+  // Estado para nuevo usuario
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
-    role: 'Desarrollador',
+    role: roles[0] || 'Desarrollador',
     project: '',
     task: '',
     status: 'Activo',
@@ -142,7 +129,7 @@ const Dashboard = () => {
     setNewUser({
       name: '',
       email: '',
-      role: 'Desarrollador',
+      role: roles[0] || 'Desarrollador',
       project: '',
       task: '',
       status: 'Activo',
@@ -151,9 +138,24 @@ const Dashboard = () => {
     setOpenModal(true);
   };
 
-  // Cerrar modal
+  // Abrir modal de roles
+  const handleOpenRolesModal = () => {
+    setRolesModalOpen(true);
+  };
+
+  // Cerrar modales
   const handleCloseModal = () => {
     setOpenModal(false);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setDeleteModalOpen(false);
+    setUserToDelete(null);
+  };
+
+  const handleCloseRolesModal = () => {
+    setRolesModalOpen(false);
+    setNewRole('');
   };
 
   // Guardar cambios (tanto para edición como creación)
@@ -174,9 +176,38 @@ const Dashboard = () => {
     setOpenModal(false);
   };
 
-  // Eliminar usuario
-  const handleDelete = (id) => {
-    setUsers(users.filter(user => user.id !== id));
+  // Agregar nuevo rol
+  const handleAddRole = () => {
+    if (newRole.trim() && !roles.includes(newRole.trim())) {
+      setRoles([...roles, newRole.trim()]);
+      setNewRole('');
+    }
+  };
+
+  // Eliminar rol
+  const handleDeleteRole = (roleToDelete) => {
+    // Verificar si el rol está en uso
+    const isRoleInUse = users.some(user => user.role === roleToDelete);
+    
+    if (isRoleInUse) {
+      alert('Este rol está en uso y no puede ser eliminado');
+      return;
+    }
+    
+    setRoles(roles.filter(role => role !== roleToDelete));
+  };
+
+  // Abrir modal de confirmación para eliminar usuario
+  const handleOpenDeleteModal = (user) => {
+    setUserToDelete(user);
+    setDeleteModalOpen(true);
+  };
+
+  // Confirmar eliminación de usuario
+  const confirmDelete = () => {
+    setUsers(users.filter(user => user.id !== userToDelete.id));
+    setDeleteModalOpen(false);
+    setUserToDelete(null);
   };
 
   // Manejar cambios en formulario de edición
@@ -200,8 +231,9 @@ const Dashboard = () => {
 
   return (
     <>
-      <AnimatedBackground />
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <BackgroundAnimado /> 
+
+      <Container maxWidth={false} disableGutters sx={{ width: '100%', py: 4 }}>
         <Paper elevation={3} sx={{ borderRadius: 3, overflow: 'hidden' }}>
           {/* Encabezado del Dashboard */}
           <Box sx={{ 
@@ -238,6 +270,12 @@ const Dashboard = () => {
                   {users.filter(u => u.status === 'Activo').length}
                 </Typography>
               </Paper>
+              <Paper sx={{ p: 2, minWidth: 180, textAlign: 'center' }}>
+                <Typography variant="h6" color="text.secondary">Roles</Typography>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mt: 1 }} color="info.main">
+                  {roles.length}
+                </Typography>
+              </Paper>
             </Stack>
             
             <Stack direction="row" spacing={2}>
@@ -246,7 +284,7 @@ const Dashboard = () => {
                 placeholder="Buscar usuarios, proyectos o tareas..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ width: 350 }}
+                sx={{ width: 300 }}
                 InputProps={{
                   startAdornment: (
                     <Box sx={{ color: 'action.active', mr: 1 }}>
@@ -258,6 +296,14 @@ const Dashboard = () => {
                   ),
                 }}
               />
+              <Button 
+                variant="contained" 
+                startIcon={<Group />}
+                onClick={handleOpenRolesModal}
+                sx={{ height: 56, bgcolor: 'secondary.main', '&:hover': { bgcolor: 'secondary.dark' } }}
+              >
+                Gestionar Roles
+              </Button>
               <Button 
                 variant="contained" 
                 startIcon={<Add />}
@@ -275,6 +321,7 @@ const Dashboard = () => {
               <TableHead>
                 <TableRow sx={{ bgcolor: '#f8f9fa' }}>
                   <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Usuario</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Rol</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Proyecto</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Tarea</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Estado</TableCell>
@@ -294,9 +341,18 @@ const Dashboard = () => {
                         <Box>
                           <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>{user.name}</Typography>
                           <Typography variant="body2" color="text.secondary">{user.email}</Typography>
-                          <Typography variant="body2" color="text.secondary">{user.role}</Typography>
                         </Box>
                       </Box>
+                    </TableCell>
+                    
+                    {/* Columna Rol */}
+                    <TableCell>
+                      <Chip 
+                        label={user.role} 
+                        color="primary" 
+                        variant="outlined"
+                        sx={{ fontWeight: 'bold' }}
+                      />
                     </TableCell>
                     
                     {/* Columna Proyecto */}
@@ -339,7 +395,7 @@ const Dashboard = () => {
                         </Tooltip>
                         <Tooltip title="Eliminar usuario">
                           <IconButton 
-                            onClick={() => handleDelete(user.id)} 
+                            onClick={() => handleOpenDeleteModal(user)} 
                             color="error"
                             sx={{ bgcolor: 'rgba(231, 76, 60, 0.1)', '&:hover': { bgcolor: 'rgba(231, 76, 60, 0.2)' } }}
                           >
@@ -404,14 +460,21 @@ const Dashboard = () => {
                     fullWidth
                     margin="normal"
                   />
-                  <TextField
-                    label="Rol"
-                    name="role"
-                    value={currentUser.role}
-                    onChange={handleEditChange}
-                    fullWidth
-                    margin="normal"
-                  />
+                  <FormControl fullWidth margin="normal">
+                    <InputLabel>Rol</InputLabel>
+                    <Select
+                      name="role"
+                      value={currentUser.role}
+                      onChange={handleEditChange}
+                      label="Rol"
+                    >
+                      {roles.map((role, index) => (
+                        <MenuItem key={index} value={role}>
+                          {role}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                   <TextField
                     label="Proyecto"
                     name="project"
@@ -472,11 +535,11 @@ const Dashboard = () => {
                       onChange={handleCreateChange}
                       label="Rol"
                     >
-                      <MenuItem value="Desarrollador">Desarrollador</MenuItem>
-                      <MenuItem value="Diseñador">Diseñador</MenuItem>
-                      <MenuItem value="QA Tester">QA Tester</MenuItem>
-                      <MenuItem value="Project Manager">Project Manager</MenuItem>
-                      <MenuItem value="DevOps">DevOps</MenuItem>
+                      {roles.map((role, index) => (
+                        <MenuItem key={index} value={role}>
+                          {role}
+                        </MenuItem>
+                      ))}
                     </Select>
                   </FormControl>
                   <TextField
@@ -522,6 +585,161 @@ const Dashboard = () => {
             </Button>
             <Button onClick={handleSave} variant="contained" color="primary">
               {currentUser ? 'Actualizar Usuario' : 'Crear Usuario'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Modal de confirmación para eliminar usuario */}
+        <Dialog 
+          open={deleteModalOpen} 
+          onClose={handleCloseDeleteModal}
+          maxWidth="xs"
+          fullWidth
+        >
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
+            <Warning sx={{ color: 'error.main', mr: 1 }} />
+            Confirmar eliminación
+          </DialogTitle>
+          
+          <DialogContent dividers>
+            <Typography variant="body1" sx={{ mb: 2 }}>
+              ¿Estás seguro de que deseas eliminar al usuario?
+            </Typography>
+            {userToDelete && (
+              <Box sx={{ display: 'flex', alignItems: 'center', bgcolor: '#f8f9fa', p: 2, borderRadius: 1 }}>
+                <Avatar sx={{ bgcolor: userToDelete.avatarColor, mr: 2 }}>
+                  {userToDelete.name.charAt(0)}
+                </Avatar>
+                <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                    {userToDelete.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {userToDelete.email}
+                  </Typography>
+                  <Chip 
+                    label={userToDelete.role} 
+                    color="primary" 
+                    size="small"
+                    sx={{ mt: 1 }}
+                  />
+                </Box>
+              </Box>
+            )}
+            <Typography variant="body2" color="error" sx={{ mt: 2, fontWeight: 'bold' }}>
+              Esta acción no se puede deshacer
+            </Typography>
+          </DialogContent>
+          
+          <DialogActions sx={{ p: 2 }}>
+            <Button 
+              onClick={handleCloseDeleteModal} 
+              variant="outlined" 
+              color="inherit"
+              sx={{ mr: 1 }}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={confirmDelete} 
+              variant="contained" 
+              color="error"
+              startIcon={<Delete />}
+            >
+              Eliminar definitivamente
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Modal para gestión de roles */}
+        <Dialog 
+          open={rolesModalOpen} 
+          onClose={handleCloseRolesModal}
+          fullWidth
+          maxWidth="sm"
+        >
+          <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Category sx={{ mr: 1, color: 'primary.main' }} />
+              <Typography variant="h6">Gestión de Roles</Typography>
+            </Box>
+            <IconButton onClick={handleCloseRolesModal}>
+              <Close />
+            </IconButton>
+          </DialogTitle>
+          
+          <DialogContent dividers>
+            <Typography variant="body1" sx={{ mb: 2 }}>
+              Agrega nuevos roles o elimina los existentes. Los roles en uso no pueden ser eliminados.
+            </Typography>
+            
+            {/* Formulario para agregar roles */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+              <TextField
+                label="Nuevo rol"
+                fullWidth
+                value={newRole}
+                onChange={(e) => setNewRole(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleAddRole()}
+              />
+              <Button 
+                variant="contained" 
+                onClick={handleAddRole}
+                disabled={!newRole.trim()}
+                sx={{ height: 56 }}
+              >
+                Agregar
+              </Button>
+            </Box>
+            
+            {/* Lista de roles existentes */}
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
+              Roles Existentes ({roles.length})
+            </Typography>
+            
+            <List sx={{ maxHeight: 300, overflow: 'auto', border: '1px solid #eee', borderRadius: 1 }}>
+              {roles.map((role, index) => (
+                <React.Fragment key={index}>
+                  <ListItem 
+                    secondaryAction={
+                      <Tooltip title="Eliminar rol">
+                        <IconButton 
+                          edge="end" 
+                          onClick={() => handleDeleteRole(role)}
+                          disabled={users.some(user => user.role === role)}
+                        >
+                          <Delete />
+                        </IconButton>
+                      </Tooltip>
+                    }
+                  >
+                    <ListItemText 
+                      primary={role} 
+                      secondary={users.some(user => user.role === role) ? "En uso" : "Disponible"} 
+                    />
+                  </ListItem>
+                  {index < roles.length - 1 && <Divider />}
+                </React.Fragment>
+              ))}
+              
+              {roles.length === 0 && (
+                <ListItem>
+                  <ListItemText 
+                    primary="No hay roles creados" 
+                    secondary="Comienza agregando un nuevo rol" 
+                  />
+                </ListItem>
+              )}
+            </List>
+          </DialogContent>
+          
+          <DialogActions sx={{ p: 2 }}>
+            <Button 
+              onClick={handleCloseRolesModal} 
+              variant="outlined" 
+              color="inherit"
+            >
+              Cerrar
             </Button>
           </DialogActions>
         </Dialog>
