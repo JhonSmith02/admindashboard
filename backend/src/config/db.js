@@ -1,25 +1,19 @@
-import sql from 'mssql';
+import mysql from 'mysql2/promise';
+import dotenv from 'dotenv';
 
-const config = {
-    user: 'jhonsmith',
-    password: 'Tpdashboard2025*',
-    server: 'tpdashboard.database.windows.net',
-    database: 'tpdashboard',
-    options: {
-        encrypt: true,
-        trustServerCertificate: false 
-    }
-};
+dotenv.config();
 
-async function conectar() {
-    try {
-        const pool = await sql.connect(config);
-        console.log('Conectado a Azure SQL Database');
-        return pool;
-    } catch (err) {
-        console.error('Error al conectar con Azure SQL:', err);
-        throw err;
-    }
-}
+export const pool = mysql.createPool({
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 3306,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_NAME,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
+    timezone: 'Z',
+    dateStrings: true
+});
 
-export { conectar };
+

@@ -12,6 +12,8 @@ const PORT = process.env.PORT || 4000;
 //Habilitamos cors para uso global
 app.use(cors());
 
+app.use(express());
+
 //Agrega router
 app.use('/', router);
 

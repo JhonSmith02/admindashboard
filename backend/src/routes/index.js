@@ -1,16 +1,15 @@
 import express from 'express';
-import { conectar } from '../config/db_local.js';
+import { pool } from '../config/db.js';
 
 const router = express.Router();
 
-// Creamos una ruta de prueba con conexion a sql server
+// Creamos una ruta de prueba con conexion a mysql
 router.get('/usuarios', async (req, res) => {
     try {
-        const pool = await conectar();
-        const resultados = await pool.request().query('SELECT * FROM usuarios');
-        res.json(resultados.recordset);
+        const [rows] = await pool.query('SELECT * FROM users');
+        res.json(rows);
     } catch (error) {
-        console.error('Error en la consulta a usuarios: ', error);
+        console.error("Error en la consulta de usuarios", error);
         res.status(500).send('Error en el servidor');
     }
 });

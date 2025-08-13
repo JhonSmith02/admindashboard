@@ -1,7 +1,5 @@
 import './App.css'
 import { useState } from 'react'
-import Login from './pages/Login.jsx';
-import Dashboard from './pages/Dashboard.jsx';
 import Userview from './pages/UserView.jsx'
 
 export default function App() {
