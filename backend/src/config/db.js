@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-export const pool = mysql.createPool({
+const pool = mysql.createPool({
     host: process.env.DB_HOST,
     port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 3306,
     user: process.env.DB_USER,
@@ -16,4 +16,5 @@ export const pool = mysql.createPool({
     dateStrings: true
 });
 
+export default pool;
 

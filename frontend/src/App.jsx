@@ -1,19 +1,26 @@
 import './App.css'
-import { useState } from 'react'
+import { useState, useEffect} from 'react'
+
+import Login from './pages/Login.jsx'
+import Dashboard from './pages/Dashboard.jsx'
 import Userview from './pages/UserView.jsx'
 
 export default function App() {
-  // const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null);
 
-  return (
-    <div>
-      {/* {!user
-        ? <Login setUser={setUser} />
-        : <div>Bienvenido, {user.name}</div>
-      } */}
-      {/* <Dashboard/> */}
-      <Userview/>
-      {/* <Board/> */}
-    </div>
-  );
+  useEffect( () => {
+    //Revisamos si existe una sesion guardada
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) setUser(JSON.parse(storedUser));
+  }, []);
+
+  if (!user){
+    return <Login setUser={ setUser }/>
+  }
+
+  if (user.role === 'admin'){
+    return <Dashboard user={user} />;
+  }
+  
+  return <Userview user={user} />;
 }

@@ -1,5 +1,5 @@
 // src/controllers/usersController.js
-import pool from '../config/db';
+import pool from '../config/db.js';
 
 /**
  * GET /api/users

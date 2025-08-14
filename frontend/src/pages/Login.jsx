@@ -11,7 +11,7 @@ import {
     Link
 } from '@mui/material';
 
-import imagen from '../assets/img-login.png';
+import imagen from '../../public/img-login.png';
 
 export default function Login({ setUser }) {
     const [email, setEmail] = useState('');
@@ -21,12 +21,32 @@ export default function Login({ setUser }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        // Aquí iría tu llamada al backend...
-        if (email === 'cuatrozero1@gmail.com' && password === 'madeon123') {
-            setUser({ user: 'JhonSmith' });
-        } else {
-            setError('Usuario Invalido');
+      setError(null);
+
+      try {
+        const res = await fetch('http://localhost:4000/api/auth/login', {
+            method: 'POST',
+            headers: {'Content-type': 'application/json'},
+            body: JSON.stringify({email, password})
+        });
+
+        const data = await res.json();
+
+        if(!res.ok){
+            setError(data.error || 'Error al iniciar sesion');
+            return;
         }
+
+        if(remember) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+        }
+
+        setUser(data.user);
+      } catch (error) {
+            console.error('Error en el login', error);
+            setError('Errror de conexion con el servidor');
+      }
     };
 
     return (
