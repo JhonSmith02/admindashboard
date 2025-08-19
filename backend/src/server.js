@@ -8,7 +8,7 @@ dotenv.config();
 
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
-
+import taskRoutes from './routes/tasks.js';
 
 
 // esta constante nos permite ejecutar express
@@ -24,6 +24,7 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/tasks', taskRoutes)
 
 app.get('/', (req, res) => res.json({ok: true, massage: "Api activada"}));
 

@@ -1,21 +1,20 @@
-// UserView.jsx
-import React, { useState, useMemo } from 'react';
-import PropTypes from 'prop-types';
+// src/pages/UserView.jsx
+import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Container,
-  Paper,
+  Box,
   Typography,
+  Paper,
+  List,
+  ListItem,
+  ListItemText,
+  Container,
   Avatar,
   Stack,
   Chip,
-  List,
-  ListItem,
   ListItemAvatar,
-  ListItemText,
   Divider,
   IconButton,
   Button,
-  Box,
   LinearProgress,
 } from '@mui/material';
 import {
@@ -25,50 +24,68 @@ import {
   WorkOutline,
 } from '@mui/icons-material';
 
-/**
- * Componente: UserView
- * - Prop opcional: user (objeto con id, name, role, tasks[])
- * - Si no se pasa user, se usan ejemplos (mock) embebidos.
- *
- * Estructura de task: { id, title, project, dueDate (ISO string), status: 'Pendiente'|'En progreso'|'Completada' }
- *
- * Estado: manejo local de cambios de estado de tareas (ideal para conectar con API luego).
- */
+export default function UserView({ user }) {
+  const [profile, setProfile] = useState(null);
+  const [tasks, setTasks] = useState([]);
+  const token = localStorage.getItem('token');
 
-export default function UserView({ user: userProp = null }) {
-  // Mock de ejemplo si no se suministra userProp
-  const exampleUser = {
-    id: 42,
-    name: 'María Gómez',
-    role: 'operador',
-    avatarColor: '#1565c0',
-    tasks: [
-      { id: 1, title: 'Checklist diario del catamarán', project: 'Operaciones', dueDate: '2025-08-12', status: 'En progreso' },
-      { id: 2, title: 'Subir reporte de ventas', project: 'Comercial', dueDate: '2025-08-14', status: 'Pendiente' },
-      { id: 3, title: 'Revisar inventario de seguridad', project: 'Logística', dueDate: '2025-08-20', status: 'Pendiente' },
-      { id: 4, title: 'Actualizar bitácora cliente', project: 'Atención', dueDate: '2025-08-10', status: 'Completada' },
-    ],
-  };
+  useEffect(() => {
+    if (!token) {
+      console.warn('No token found in localStorage');
+      return;
+    }
 
-  const user = userProp || exampleUser;
+    const load = async () => {
+      try {
+        const resProfile = await fetch('http://localhost:4000/api/users/me', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!resProfile.ok) {
+          const err = await resProfile.json();
+          console.error('Error /me', err);
+        } else {
+          const dataProfile = await resProfile.json();
+          setProfile(dataProfile);
+        }
+      } catch (err) {
+        console.error('Error cargando perfil', err);
+      }
 
-  // estado local para tareas (clonamos para evitar mutar props)
-  const [tasks, setTasks] = useState(() => (user.tasks || []).map(t => ({ ...t })));
+      try {
+        const resTasks = await fetch('http://localhost:4000/api/tasks/my', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!resTasks.ok) {
+          const err = await resTasks.json();
+          console.error('Error /tasks/my', err);
+        } else {
+          const dataTasks = await resTasks.json();
+          setTasks(dataTasks);
+        }
+      } catch (err) {
+        console.error('Error cargando tareas', err);
+      }
+    };
 
-  // cálculo de progreso (porcentaje de tareas completadas)
+    load();
+  }, [token]);
+
+  // --- helpers / UI-only logic (no cambia fetch ni persistencia) ---
+
+  // progreso % calculado desde las tareas en estado local
   const progress = useMemo(() => {
-    if (!tasks.length) return 0;
+    if (!tasks || tasks.length === 0) return 0;
     const total = tasks.length;
     const completed = tasks.filter(t => t.status === 'Completada').length;
-    // cálculo: (completed / total) * 100
     return Math.round((completed / total) * 100);
   }, [tasks]);
 
+  // toggle local del estado de una tarea (no persiste por ahora)
   const toggleComplete = (taskId) => {
     setTasks(prev =>
       prev.map(t => (t.id === taskId ? { ...t, status: t.status === 'Completada' ? 'Pendiente' : 'Completada' } : t))
     );
-    // En producción aquí emitirías una llamada al backend para persistir el cambio.
+    // Nota: En producción llamarías al backend para persistir este cambio.
   };
 
   const formatDate = (iso) => {
@@ -81,17 +98,20 @@ export default function UserView({ user: userProp = null }) {
     }
   };
 
+  // --- render ---
+  if (!profile) return <Typography sx={{ p: 4 }}>Cargando perfil...</Typography>;
+
   return (
     <Container maxWidth="md" sx={{ py: 3 }}>
       <Paper sx={{ p: 3, borderRadius: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="center" spacing={2}>
           <Stack direction="row" spacing={2} alignItems="center">
-            <Avatar sx={{ bgcolor: user.avatarColor || '#3a86ff' }}>
-              {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+            <Avatar sx={{ bgcolor: profile.avatarColor || '#3a86ff' }}>
+              {profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
             </Avatar>
             <div>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>{user.name}</Typography>
-              <Chip label={`Rol: ${user.role}`} size="small" sx={{ mt: 1 }} />
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>{profile.name}</Typography>
+              <Chip label={`Rol: ${profile.role}`} size="small" sx={{ mt: 1 }} />
             </div>
           </Stack>
 
@@ -110,7 +130,7 @@ export default function UserView({ user: userProp = null }) {
 
         <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>Tareas asignadas</Typography>
 
-        {tasks.length === 0 ? (
+        {(!tasks || tasks.length === 0) ? (
           <Typography color="text.secondary">No tienes tareas asignadas.</Typography>
         ) : (
           <List disablePadding>
@@ -132,7 +152,7 @@ export default function UserView({ user: userProp = null }) {
                         <Button
                           size="small"
                           variant="outlined"
-                          onClick={() => alert(`Detalle: ${task.title}\nProyecto: ${task.project}`)}
+                          onClick={() => alert(`Detalle: ${task.title}\nProyecto: ${task.project || '—'}`)}
                         >
                           Ver
                         </Button>
@@ -165,7 +185,7 @@ export default function UserView({ user: userProp = null }) {
 
                           <Divider orientation="vertical" flexItem sx={{ mx: 1, display: { xs: 'none', sm: 'block' } }} />
 
-                          <Typography variant="caption" color="text.secondary">Proyecto: {task.project}</Typography>
+                          <Typography variant="caption" color="text.secondary">Proyecto: {task.project || '—'}</Typography>
                         </Stack>
                       }
                     />
@@ -179,19 +199,3 @@ export default function UserView({ user: userProp = null }) {
     </Container>
   );
 }
-
-UserView.propTypes = {
-  user: PropTypes.shape({
-    id: PropTypes.any,
-    name: PropTypes.string,
-    role: PropTypes.string,
-    avatarColor: PropTypes.string,
-    tasks: PropTypes.arrayOf(PropTypes.shape({
-      id: PropTypes.any,
-      title: PropTypes.string,
-      project: PropTypes.string,
-      dueDate: PropTypes.string,
-      status: PropTypes.string,
-    })),
-  }),
-};
