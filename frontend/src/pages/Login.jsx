@@ -5,7 +5,7 @@ import {
   Grid, Box, Typography, TextField, FormControlLabel,
   Checkbox, Button, Link
 } from '@mui/material';
-    import imagen from '../assets/img-login.png';
+import imagen from '../assets/img-login.png';
 
 export default function Login({ setUser }) {
   const [email, setEmail] = useState('');
@@ -49,28 +49,100 @@ export default function Login({ setUser }) {
 
   return (
     <Grid container sx={{ minHeight: '100vh' }}>
-      <Grid xs={12} md={6} container alignItems="center" justifyContent="center" sx={{ p: 4 }}>
+      {/* Columna del formulario */}
+      <Grid
+        size={{ xs: 12, md: 6 }}
+        container
+        alignItems="center"
+        justifyContent="center"
+        sx={{ p: 4 }}
+      >
         <Box sx={{ width: '100%', maxWidth: 360 }}>
-          <Typography variant="h4" gutterBottom>Hola, Bienvenido</Typography>
-          <Typography variant="body2" color="text.secondary" gutterBottom>Bienvenido de nuevo a tu gestor de usuarios!!!</Typography>
+          <Typography variant="h4" gutterBottom>
+            Hola, Bienvenido
+          </Typography>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            gutterBottom
+          >
+            Bienvenido de nuevo a tu gestor de usuarios!!!
+          </Typography>
 
-          <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 2 }}>
-            <TextField label="Email" type="email" fullWidth required margin="normal" value={email} onChange={e => setEmail(e.target.value)} />
-            <TextField label="Contraseña" type="password" fullWidth required margin="normal" value={password} onChange={e => setPassword(e.target.value)} />
-            <FormControlLabel control={<Checkbox checked={remember} onChange={e => setRemember(e.target.checked)} />} label="Recordar usuario" />
+          <Box
+            component="form"
+            onSubmit={handleSubmit}
+            noValidate
+            sx={{ mt: 2 }}
+          >
+            <TextField
+              label="Email"
+              type="email"
+              fullWidth
+              required
+              margin="normal"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <TextField
+              label="Contraseña"
+              type="password"
+              fullWidth
+              required
+              margin="normal"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                />
+              }
+              label="Recordar usuario"
+            />
 
-            {error && <Typography color="error" variant="body2" sx={{ mt: 1 }}>{error}</Typography>}
+            {error && (
+              <Typography
+                color="error"
+                variant="body2"
+                sx={{ mt: 1 }}
+              >
+                {error}
+              </Typography>
+            )}
 
-            <Button type="submit" variant='contained' fullWidth sx={{ mt: 3, mb: 1 }}>Inicia Sesión</Button>
+            <Button
+              type="submit"
+              variant="contained"
+              fullWidth
+              sx={{ mt: 3, mb: 1 }}
+            >
+              Inicia Sesión
+            </Button>
 
             <Box display="flex" justifyContent="space-between" sx={{ mt: 1 }}>
-              <Link href="#" variant="body2">¿Olvidaste tu contraseña?</Link>
+              <Link href="#" variant="body2">
+                ¿Olvidaste tu contraseña?
+              </Link>
             </Box>
           </Box>
         </Box>
       </Grid>
 
-      <Grid md={6} sx={{ display: { xs: 'none', md: 'block' }, background: `url(${imagen}) center/cover no-repeat` }} />
+      {/* Columna con la imagen */}
+      <Grid
+        size={{ md: 6 }}
+        sx={{
+          display: { xs: 'none', md: 'block' },
+          backgroundImage: `url(${imagen})`,
+          backgroundPosition: 'center',
+          backgroundSize: 'cover',
+          backgroundRepeat: 'no-repeat',
+          minHeight: '100vh'
+        }}
+      />
     </Grid>
   );
 }

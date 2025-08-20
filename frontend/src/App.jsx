@@ -1,4 +1,4 @@
-import './App.css'
+
 import { useState, useEffect} from 'react'
 
 import Login from './pages/Login.jsx'
@@ -19,8 +19,8 @@ export default function App() {
   }
 
   if (user.role === 'admin'){
-    return <Dashboard user={user} />;
+    return <Dashboard user={user} setUser={setUser} />;
   }
   
-  return <Userview user={user} />;
+  return <Userview user={user} setUser={setUser}/>;
 }

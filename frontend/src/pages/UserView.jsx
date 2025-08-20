@@ -1,5 +1,7 @@
 // src/pages/UserView.jsx
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import {
   Box,
   Typography,
@@ -24,7 +26,17 @@ import {
   WorkOutline,
 } from '@mui/icons-material';
 
-export default function UserView({ user }) {
+export default function UserView({ user, setUser }) {
+
+  const navigate = useNavigate();
+
+  const handleLolgout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUser(null);
+    navigate("/login");
+  }
+
   const [profile, setProfile] = useState(null);
   const [tasks, setTasks] = useState([]);
   const token = localStorage.getItem('token');
@@ -70,7 +82,6 @@ export default function UserView({ user }) {
     load();
   }, [token]);
 
-  // --- helpers / UI-only logic (no cambia fetch ni persistencia) ---
 
   // progreso % calculado desde las tareas en estado local
   const progress = useMemo(() => {
@@ -105,6 +116,8 @@ export default function UserView({ user }) {
     <Container maxWidth="md" sx={{ py: 3 }}>
       <Paper sx={{ p: 3, borderRadius: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="center" spacing={2}>
+          
+
           <Stack direction="row" spacing={2} alignItems="center">
             <Avatar sx={{ bgcolor: profile.avatarColor || '#3a86ff' }}>
               {profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
@@ -124,6 +137,14 @@ export default function UserView({ user }) {
               <Typography variant="body2" sx={{ minWidth: 40 }}>{progress}%</Typography>
             </Box>
           </Box>
+
+          <Button
+            variant='outlined'
+            color="error"
+            onClick={handleLolgout}
+          >
+            Cerrar Sesion
+          </Button>
         </Stack>
 
         <Divider sx={{ my: 2 }} />

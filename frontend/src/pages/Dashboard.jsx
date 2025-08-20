@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react'
-import BackgroundAnimado from '../components/dashboard/BackgroundAnimado'
+import React, { useState, useEffect } from 'react';
+import BackgroundAnimado from '../components/dashboard/BackgroundAnimado';
+import DashboardHeader from '../components/DashboardHeader';
+import UserTable from '../components/dashboard/UserTable';
+
 import {
   Box,
   Container,
@@ -31,10 +34,10 @@ import {
   ListItemText,
   Divider
 } from '@mui/material';
-import { 
-  Delete, 
-  Edit, 
-  Person, 
+import {
+  Delete,
+  Edit,
+  Person,
   Assignment,
   Task,
   Add,
@@ -44,50 +47,12 @@ import {
   Category
 } from '@mui/icons-material';
 
-const Dashboard = () => {
+const Dashboard = (setUser) => {
   // Estado inicial de usuarios
-  const [users, setUsers] = useState([
-    { 
-      id: 1, 
-      name: 'Ana López', 
-      email: 'ana.lopez@empresa.com',
-      role: 'Desarrollador Frontend',
-      project: 'Desarrollo Web', 
-      task: 'Diseño UI',
-      status: 'Activo',
-      avatarColor: '#ff6b6b'
-    },
-    { 
-      id: 2, 
-      name: 'Carlos Ruiz', 
-      email: 'carlos.ruiz@empresa.com',
-      role: 'QA Tester',
-      project: 'App Móvil', 
-      task: 'Pruebas QA',
-      status: 'Activo',
-      avatarColor: '#4ecdc4'
-    },
-    { 
-      id: 3, 
-      name: 'Marta Vidal', 
-      email: 'marta.vidal@empresa.com',
-      role: 'DBA',
-      project: 'Base de Datos', 
-      task: 'Optimización',
-      status: 'Activo',
-      avatarColor: '#ffbe0b'
-    }
-  ]);
+  const [users, setUsers] = useState([]);
 
   // Estado para roles disponibles
-  const [roles, setRoles] = useState([
-    'Desarrollador Frontend',
-    'QA Tester',
-    'DBA',
-    'Project Manager',
-    'Diseñador UI/UX',
-    'DevOps Engineer'
-  ]);
+  const [roles, setRoles] = useState([]);
 
   // Estados para modales
   const [openModal, setOpenModal] = useState(false);
@@ -96,7 +61,7 @@ const Dashboard = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [userToDelete, setUserToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Estado para nuevo rol
   const [newRole, setNewRole] = useState('');
 
@@ -104,11 +69,11 @@ const Dashboard = () => {
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
-    role: roles[0] || 'Desarrollador',
+    role: '',
     project: '',
     task: '',
-    status: 'Activo',
-    avatarColor: '#3a86ff'
+    status: '',
+    avatarColor: ''
   });
 
   // Generar color aleatorio para avatares
@@ -138,6 +103,7 @@ const Dashboard = () => {
     setOpenModal(true);
   };
 
+
   // Abrir modal de roles
   const handleOpenRolesModal = () => {
     setRolesModalOpen(true);
@@ -162,7 +128,7 @@ const Dashboard = () => {
   const handleSave = () => {
     if (currentUser) {
       // Actualizar usuario existente
-      setUsers(users.map(user => 
+      setUsers(users.map(user =>
         user.id === currentUser.id ? currentUser : user
       ));
     } else {
@@ -188,12 +154,12 @@ const Dashboard = () => {
   const handleDeleteRole = (roleToDelete) => {
     // Verificar si el rol está en uso
     const isRoleInUse = users.some(user => user.role === roleToDelete);
-    
+
     if (isRoleInUse) {
       alert('Este rol está en uso y no puede ser eliminado');
       return;
     }
-    
+
     setRoles(roles.filter(role => role !== roleToDelete));
   };
 
@@ -223,7 +189,7 @@ const Dashboard = () => {
   };
 
   // Filtrar usuarios por búsqueda
-  const filteredUsers = users.filter(user => 
+  const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.project.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.task.toLowerCase().includes(searchTerm.toLowerCase())
@@ -231,196 +197,29 @@ const Dashboard = () => {
 
   return (
     <>
-      <BackgroundAnimado /> 
+      <BackgroundAnimado />
 
       <Container maxWidth={false} disableGutters sx={{ width: '100%', py: 4 }}>
         <Paper elevation={3} sx={{ borderRadius: 3, overflow: 'hidden' }}>
-          {/* Encabezado del Dashboard */}
-          <Box sx={{ 
-            bgcolor: 'primary.main', 
-            color: 'white', 
-            p: 3, 
-            display: 'flex', 
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
-            <Box>
-              <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
-                Panel de Gestión de Usuarios
-              </Typography>
-              <Typography variant="subtitle1" sx={{ opacity: 0.9, mt: 1 }}>
-                Administra los usuarios, sus proyectos y tareas asignadas
-              </Typography>
-            </Box>
-            <Avatar sx={{ bgcolor: 'white', color: 'primary.main', width: 56, height: 56 }}>
-              <Person sx={{ fontSize: 32 }} />
-            </Avatar>
-          </Box>
-
-          {/* Estadísticas y Búsqueda */}
-          <Box sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: '#f8f9fa' }}>
-            <Stack direction="row" spacing={2}>
-              <Paper sx={{ p: 2, minWidth: 180, textAlign: 'center' }}>
-                <Typography variant="h6" color="text.secondary">Total Usuarios</Typography>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mt: 1 }}>{users.length}</Typography>
-              </Paper>
-              <Paper sx={{ p: 2, minWidth: 180, textAlign: 'center' }}>
-                <Typography variant="h6" color="text.secondary">Activos</Typography>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mt: 1 }} color="success.main">
-                  {users.filter(u => u.status === 'Activo').length}
-                </Typography>
-              </Paper>
-              <Paper sx={{ p: 2, minWidth: 180, textAlign: 'center' }}>
-                <Typography variant="h6" color="text.secondary">Roles</Typography>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mt: 1 }} color="info.main">
-                  {roles.length}
-                </Typography>
-              </Paper>
-            </Stack>
-            
-            <Stack direction="row" spacing={2}>
-              <TextField
-                variant="outlined"
-                placeholder="Buscar usuarios, proyectos o tareas..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ width: 300 }}
-                InputProps={{
-                  startAdornment: (
-                    <Box sx={{ color: 'action.active', mr: 1 }}>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                      </svg>
-                    </Box>
-                  ),
-                }}
-              />
-              <Button 
-                variant="contained" 
-                startIcon={<Group />}
-                onClick={handleOpenRolesModal}
-                sx={{ height: 56, bgcolor: 'secondary.main', '&:hover': { bgcolor: 'secondary.dark' } }}
-              >
-                Gestionar Roles
-              </Button>
-              <Button 
-                variant="contained" 
-                startIcon={<Add />}
-                onClick={handleOpenCreateModal}
-                sx={{ height: 56 }}
-              >
-                Crear Usuario
-              </Button>
-            </Stack>
-          </Box>
+          <DashboardHeader
+            totalUsers={users.length}
+            activeUsers={users.filter((u) => u.status === "Activ").length}
+            rolesCount={roles.length}
+            searchTerm={searchTerm}
+            onSearchChange={(e) => setSearchTerm(e.target.value)}
+            onOpenRoles={handleOpenRolesModal}
+            onOpenCreate={handleOpenCreateModal}
+          />
 
           {/* Tabla de Usuarios */}
-          <TableContainer component={Paper} sx={{ borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
-            <Table sx={{ minWidth: 1000 }}>
-              <TableHead>
-                <TableRow sx={{ bgcolor: '#f8f9fa' }}>
-                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Usuario</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Rol</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Proyecto</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Tarea</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Estado</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem', textAlign: 'center' }}>Acciones</TableCell>
-                </TableRow>
-              </TableHead>
-              
-              <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user.id} hover>
-                    {/* Columna Usuario */}
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Avatar sx={{ bgcolor: user.avatarColor, mr: 2, width: 40, height: 40 }}>
-                          {user.name.charAt(0)}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>{user.name}</Typography>
-                          <Typography variant="body2" color="text.secondary">{user.email}</Typography>
-                        </Box>
-                      </Box>
-                    </TableCell>
-                    
-                    {/* Columna Rol */}
-                    <TableCell>
-                      <Chip 
-                        label={user.role} 
-                        color="primary" 
-                        variant="outlined"
-                        sx={{ fontWeight: 'bold' }}
-                      />
-                    </TableCell>
-                    
-                    {/* Columna Proyecto */}
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Assignment sx={{ color: 'primary.main', mr: 1 }} />
-                        <Typography>{user.project}</Typography>
-                      </Box>
-                    </TableCell>
-                    
-                    {/* Columna Tarea */}
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Task sx={{ color: 'secondary.main', mr: 1 }} />
-                        <Typography>{user.task}</Typography>
-                      </Box>
-                    </TableCell>
-                    
-                    {/* Columna Estado */}
-                    <TableCell>
-                      <Chip 
-                        label={user.status} 
-                        color={user.status === 'Activo' ? 'success' : 'warning'} 
-                        variant="outlined"
-                        sx={{ fontWeight: 'bold' }}
-                      />
-                    </TableCell>
-                    
-                    {/* Columna Acciones */}
-                    <TableCell align="center">
-                      <Stack direction="row" justifyContent="center" spacing={1}>
-                        <Tooltip title="Editar usuario">
-                          <IconButton 
-                            onClick={() => handleOpenEditModal(user)} 
-                            color="primary"
-                            sx={{ bgcolor: 'rgba(52, 152, 219, 0.1)', '&:hover': { bgcolor: 'rgba(52, 152, 219, 0.2)' } }}
-                          >
-                            <Edit />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Eliminar usuario">
-                          <IconButton 
-                            onClick={() => handleOpenDeleteModal(user)} 
-                            color="error"
-                            sx={{ bgcolor: 'rgba(231, 76, 60, 0.1)', '&:hover': { bgcolor: 'rgba(231, 76, 60, 0.2)' } }}
-                          >
-                            <Delete />
-                          </IconButton>
-                        </Tooltip>
-                      </Stack>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          
-          {/* Mensaje cuando no hay resultados */}
-          {filteredUsers.length === 0 && (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Typography variant="h6" color="text.secondary">
-                No se encontraron usuarios que coincidan con tu búsqueda
-              </Typography>
-              <Button variant="outlined" sx={{ mt: 2 }} onClick={() => setSearchTerm('')}>
-                Limpiar búsqueda
-              </Button>
-            </Box>
-          )}
+          <UserTable
+            users={users}
+            onEdit={handleOpenEditModal}
+            onDelete={handleOpenDeleteModal}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+          />
+
         </Paper>
 
         {/* Pie de página */}
@@ -438,7 +237,7 @@ const Dashboard = () => {
               <Close />
             </IconButton>
           </DialogTitle>
-          
+
           <DialogContent dividers sx={{ pt: 2 }}>
             <Stack spacing={3} sx={{ mt: 1 }}>
               {currentUser ? (
@@ -578,7 +377,7 @@ const Dashboard = () => {
               )}
             </Stack>
           </DialogContent>
-          
+
           <DialogActions sx={{ p: 3 }}>
             <Button onClick={handleCloseModal} variant="outlined" color="inherit">
               Cancelar
@@ -590,8 +389,8 @@ const Dashboard = () => {
         </Dialog>
 
         {/* Modal de confirmación para eliminar usuario */}
-        <Dialog 
-          open={deleteModalOpen} 
+        <Dialog
+          open={deleteModalOpen}
           onClose={handleCloseDeleteModal}
           maxWidth="xs"
           fullWidth
@@ -600,7 +399,7 @@ const Dashboard = () => {
             <Warning sx={{ color: 'error.main', mr: 1 }} />
             Confirmar eliminación
           </DialogTitle>
-          
+
           <DialogContent dividers>
             <Typography variant="body1" sx={{ mb: 2 }}>
               ¿Estás seguro de que deseas eliminar al usuario?
@@ -617,9 +416,9 @@ const Dashboard = () => {
                   <Typography variant="body2" color="text.secondary">
                     {userToDelete.email}
                   </Typography>
-                  <Chip 
-                    label={userToDelete.role} 
-                    color="primary" 
+                  <Chip
+                    label={userToDelete.role}
+                    color="primary"
                     size="small"
                     sx={{ mt: 1 }}
                   />
@@ -630,19 +429,19 @@ const Dashboard = () => {
               Esta acción no se puede deshacer
             </Typography>
           </DialogContent>
-          
+
           <DialogActions sx={{ p: 2 }}>
-            <Button 
-              onClick={handleCloseDeleteModal} 
-              variant="outlined" 
+            <Button
+              onClick={handleCloseDeleteModal}
+              variant="outlined"
               color="inherit"
               sx={{ mr: 1 }}
             >
               Cancelar
             </Button>
-            <Button 
-              onClick={confirmDelete} 
-              variant="contained" 
+            <Button
+              onClick={confirmDelete}
+              variant="contained"
               color="error"
               startIcon={<Delete />}
             >
@@ -652,8 +451,8 @@ const Dashboard = () => {
         </Dialog>
 
         {/* Modal para gestión de roles */}
-        <Dialog 
-          open={rolesModalOpen} 
+        <Dialog
+          open={rolesModalOpen}
           onClose={handleCloseRolesModal}
           fullWidth
           maxWidth="sm"
@@ -667,12 +466,12 @@ const Dashboard = () => {
               <Close />
             </IconButton>
           </DialogTitle>
-          
+
           <DialogContent dividers>
             <Typography variant="body1" sx={{ mb: 2 }}>
               Agrega nuevos roles o elimina los existentes. Los roles en uso no pueden ser eliminados.
             </Typography>
-            
+
             {/* Formulario para agregar roles */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
               <TextField
@@ -682,8 +481,8 @@ const Dashboard = () => {
                 onChange={(e) => setNewRole(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleAddRole()}
               />
-              <Button 
-                variant="contained" 
+              <Button
+                variant="contained"
                 onClick={handleAddRole}
                 disabled={!newRole.trim()}
                 sx={{ height: 56 }}
@@ -691,20 +490,20 @@ const Dashboard = () => {
                 Agregar
               </Button>
             </Box>
-            
+
             {/* Lista de roles existentes */}
             <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
               Roles Existentes ({roles.length})
             </Typography>
-            
+
             <List sx={{ maxHeight: 300, overflow: 'auto', border: '1px solid #eee', borderRadius: 1 }}>
               {roles.map((role, index) => (
                 <React.Fragment key={index}>
-                  <ListItem 
+                  <ListItem
                     secondaryAction={
                       <Tooltip title="Eliminar rol">
-                        <IconButton 
-                          edge="end" 
+                        <IconButton
+                          edge="end"
                           onClick={() => handleDeleteRole(role)}
                           disabled={users.some(user => user.role === role)}
                         >
@@ -713,30 +512,30 @@ const Dashboard = () => {
                       </Tooltip>
                     }
                   >
-                    <ListItemText 
-                      primary={role} 
-                      secondary={users.some(user => user.role === role) ? "En uso" : "Disponible"} 
+                    <ListItemText
+                      primary={role}
+                      secondary={users.some(user => user.role === role) ? "En uso" : "Disponible"}
                     />
                   </ListItem>
                   {index < roles.length - 1 && <Divider />}
                 </React.Fragment>
               ))}
-              
+
               {roles.length === 0 && (
                 <ListItem>
-                  <ListItemText 
-                    primary="No hay roles creados" 
-                    secondary="Comienza agregando un nuevo rol" 
+                  <ListItemText
+                    primary="No hay roles creados"
+                    secondary="Comienza agregando un nuevo rol"
                   />
                 </ListItem>
               )}
             </List>
           </DialogContent>
-          
+
           <DialogActions sx={{ p: 2 }}>
-            <Button 
-              onClick={handleCloseRolesModal} 
-              variant="outlined" 
+            <Button
+              onClick={handleCloseRolesModal}
+              variant="outlined"
               color="inherit"
             >
               Cerrar
