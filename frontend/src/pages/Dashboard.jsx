@@ -8,12 +8,6 @@ import {
   Container,
   Typography,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Button,
   IconButton,
@@ -32,7 +26,9 @@ import {
   List,
   ListItem,
   ListItemText,
-  Divider
+  Divider,
+  CircularProgress,
+  Alert
 } from '@mui/material';
 import {
   Delete,
@@ -47,12 +43,12 @@ import {
   Category
 } from '@mui/icons-material';
 
-const Dashboard = (setUser) => {
-  // Estado inicial de usuarios
+const Dashboard = ({ user, setUser }) => {
+  // Estados principales
   const [users, setUsers] = useState([]);
-
-  // Estado para roles disponibles
   const [roles, setRoles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Estados para modales
   const [openModal, setOpenModal] = useState(false);
@@ -72,9 +68,70 @@ const Dashboard = (setUser) => {
     role: '',
     project: '',
     task: '',
-    status: '',
+    status: 'Activo',
     avatarColor: ''
   });
+
+  // Token de autenticación
+  const token = localStorage.getItem('token');
+
+  // Función para hacer peticiones autenticadas
+  const fetchWithAuth = async (url, options = {}) => {
+    const response = await fetch(`http://localhost:4000${url}`, {
+      ...options,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Error ${response.status}`);
+    }
+
+    return response.json();
+  };
+
+  // Cargar datos iniciales
+  useEffect(() => {
+    loadInitialData();
+  }, []);
+
+  const loadInitialData = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Cargar usuarios
+      const usersData = await fetchWithAuth('/api/users');
+      
+      // Transformar datos para que coincidan con el formato esperado
+      const transformedUsers = usersData.map(user => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        project: 'Sin asignar', // Agregar lógica para proyectos si existe en BD
+        task: 'Sin asignar', // Agregar lógica para tareas si existe en BD
+        status: user.status || 'Activo',
+        avatarColor: user.avatar_color || getRandomColor(),
+      }));
+
+      setUsers(transformedUsers);
+
+      // Extraer roles únicos de los usuarios
+      const uniqueRoles = [...new Set(usersData.map(user => user.role).filter(Boolean))];
+      setRoles(uniqueRoles);
+
+    } catch (err) {
+      console.error('Error cargando datos:', err);
+      setError('Error al cargar los datos. Verifica tu conexión.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Generar color aleatorio para avatares
   function getRandomColor() {
@@ -94,7 +151,7 @@ const Dashboard = (setUser) => {
     setNewUser({
       name: '',
       email: '',
-      role: roles[0] || 'Desarrollador',
+      role: roles[0] || 'user',
       project: '',
       task: '',
       status: 'Activo',
@@ -102,7 +159,6 @@ const Dashboard = (setUser) => {
     });
     setOpenModal(true);
   };
-
 
   // Abrir modal de roles
   const handleOpenRolesModal = () => {
@@ -125,21 +181,53 @@ const Dashboard = (setUser) => {
   };
 
   // Guardar cambios (tanto para edición como creación)
-  const handleSave = () => {
-    if (currentUser) {
-      // Actualizar usuario existente
-      setUsers(users.map(user =>
-        user.id === currentUser.id ? currentUser : user
-      ));
-    } else {
-      // Crear nuevo usuario
-      const newUserWithId = {
-        ...newUser,
-        id: Math.max(...users.map(u => u.id), 0) + 1
-      };
-      setUsers([...users, newUserWithId]);
+  const handleSave = async () => {
+    try {
+      if (currentUser) {
+        // Actualizar usuario existente
+        await fetchWithAuth(`/api/users/${currentUser.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            name: currentUser.name,
+            email: currentUser.email,
+            role: currentUser.role,
+            status: currentUser.status,
+          }),
+        });
+
+        // Actualizar estado local
+        setUsers(users.map(user =>
+          user.id === currentUser.id ? currentUser : user
+        ));
+      } else {
+        // Crear nuevo usuario
+        const createdUser = await fetchWithAuth('/api/users', {
+          method: 'POST',
+          body: JSON.stringify({
+            name: newUser.name,
+            email: newUser.email,
+            role: newUser.role,
+            status: newUser.status,
+            avatar_color: newUser.avatarColor,
+          }),
+        });
+
+        // Agregar a la lista local
+        const newUserWithFormat = {
+          ...newUser,
+          id: createdUser.id,
+          role: createdUser.role,
+        };
+        setUsers([...users, newUserWithFormat]);
+      }
+
+      setOpenModal(false);
+      // Recargar datos para mantener consistencia
+      // loadInitialData();
+    } catch (err) {
+      console.error('Error guardando usuario:', err);
+      setError('Error al guardar el usuario');
     }
-    setOpenModal(false);
   };
 
   // Agregar nuevo rol
@@ -170,10 +258,19 @@ const Dashboard = (setUser) => {
   };
 
   // Confirmar eliminación de usuario
-  const confirmDelete = () => {
-    setUsers(users.filter(user => user.id !== userToDelete.id));
-    setDeleteModalOpen(false);
-    setUserToDelete(null);
+  const confirmDelete = async () => {
+    try {
+      await fetchWithAuth(`/api/users/${userToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      setUsers(users.filter(user => user.id !== userToDelete.id));
+      setDeleteModalOpen(false);
+      setUserToDelete(null);
+    } catch (err) {
+      console.error('Error eliminando usuario:', err);
+      setError('Error al eliminar el usuario');
+    }
   };
 
   // Manejar cambios en formulario de edición
@@ -188,22 +285,33 @@ const Dashboard = (setUser) => {
     setNewUser(prev => ({ ...prev, [name]: value }));
   };
 
-  // Filtrar usuarios por búsqueda
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.project.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.task.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Mostrar loading
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress size={60} />
+        <Typography variant="h6" sx={{ ml: 2 }}>
+          Cargando dashboard...
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <>
       <BackgroundAnimado />
 
       <Container maxWidth={false} disableGutters sx={{ width: '100%', py: 4 }}>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+            {error}
+          </Alert>
+        )}
+
         <Paper elevation={3} sx={{ borderRadius: 3, overflow: 'hidden' }}>
           <DashboardHeader
             totalUsers={users.length}
-            activeUsers={users.filter((u) => u.status === "Activ").length}
+            activeUsers={users.filter((u) => u.status === "Activo").length}
             rolesCount={roles.length}
             searchTerm={searchTerm}
             onSearchChange={(e) => setSearchTerm(e.target.value)}
