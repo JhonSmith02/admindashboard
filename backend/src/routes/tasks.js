@@ -1,20 +1,37 @@
 // src/routes/tasks.js
 import express from 'express';
-const router = express.Router();
-import { authenticateToken } from '../middleware/auth.js';
-import pool from'../config/db.js';
+import { authenticateToken, requireRole } from '../middleware/auth.js';
+import {
+  getMyTasks,
+  listTasks,
+  getTasksByUser,
+  createTask,
+  updateTask,
+  deleteTask,
+  getProjects
+} from '../controllers/tasksController.js';
 
-router.get('/my', authenticateToken, async (req, res) => {
-  try {
-    const [rows] = await pool.query(
-      'SELECT id, title, status FROM tasks WHERE assigned_to = ?',
-      [req.user.id]
-    );
-    res.json(rows);
-  } catch (err) {
-    console.error('Error cargando tareas', err);
-    res.status(500).json({ error: 'Error interno' });
-  }
-});
+const router = express.Router();
+
+// GET /api/tasks/my - Obtener tareas del usuario autenticado
+router.get('/my', authenticateToken, getMyTasks);
+
+// GET /api/tasks/projects - Obtener lista de proyectos
+router.get('/projects', authenticateToken, getProjects);
+
+// GET /api/tasks - Listar todas las tareas (solo admin)
+router.get('/', authenticateToken, requireRole('admin'), listTasks);
+
+// GET /api/tasks/user/:userId - Obtener tareas de un usuario específico (solo admin)
+router.get('/user/:userId', authenticateToken, requireRole('admin'), getTasksByUser);
+
+// POST /api/tasks - Crear nueva tarea (solo admin)
+router.post('/', authenticateToken, requireRole('admin'), createTask);
+
+// PUT /api/tasks/:id - Actualizar tarea (admin o usuario asignado)
+router.put('/:id', authenticateToken, updateTask);
+
+// DELETE /api/tasks/:id - Eliminar tarea (solo admin)
+router.delete('/:id', authenticateToken, requireRole('admin'), deleteTask);
 
 export default router;

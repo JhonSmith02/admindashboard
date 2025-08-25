@@ -77,8 +77,13 @@ export async function createUser(req, res) {
     const { name, email, role, password, status = 'Activo', avatar_color } = req.body;
 
     // Validaciones básicas
-    if (!name || !email || !role) {
-      return res.status(400).json({ error: 'Name, email and role are required' });
+    if (!name || !email || !role || !password) {
+      return res.status(400).json({ error: 'Name, email, role and password are required' });
+    }
+
+    // Validar longitud de contraseña
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
     }
 
     // Validar email único
@@ -99,10 +104,9 @@ export async function createUser(req, res) {
       roleId = roleRows[0].id;
     }
 
-    // Hash de la contraseña (usar una por defecto si no se proporciona)
-    const defaultPassword = password || 'password123';
+    // Hash de la contraseña
     const saltRounds = 10;
-    const password_hash = await bcrypt.hash(defaultPassword, saltRounds);
+    const password_hash = await bcrypt.hash(password, saltRounds);
 
     // Insertar usuario
     const [result] = await pool.query(
@@ -133,7 +137,7 @@ export async function createUser(req, res) {
 export async function updateUser(req, res) {
   try {
     const { id } = req.params;
-    const { name, email, role, status, avatar_color } = req.body;
+    const { name, email, role, password, status, avatar_color } = req.body;
 
     // Verificar que el usuario existe
     const [existingUser] = await pool.query('SELECT id FROM users WHERE id = ?', [id]);
@@ -149,6 +153,11 @@ export async function updateUser(req, res) {
       }
     }
 
+    // Validar longitud de contraseña si se proporciona
+    if (password && password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    }
+
     // Obtener role_id si se proporciona rol
     let roleId = null;
     if (role) {
@@ -160,6 +169,13 @@ export async function updateUser(req, res) {
       } else {
         roleId = roleRows[0].id;
       }
+    }
+
+    // Hash de la nueva contraseña si se proporciona
+    let password_hash = null;
+    if (password) {
+      const saltRounds = 10;
+      password_hash = await bcrypt.hash(password, saltRounds);
     }
 
     // Construir la consulta de actualización dinámicamente
@@ -177,6 +193,10 @@ export async function updateUser(req, res) {
     if (roleId) {
       updateFields.push('role_id = ?');
       updateValues.push(roleId);
+    }
+    if (password_hash) {
+      updateFields.push('password_hash = ?');
+      updateValues.push(password_hash);
     }
     if (status) {
       updateFields.push('status = ?');

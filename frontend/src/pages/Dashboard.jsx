@@ -28,7 +28,8 @@ import {
   ListItemText,
   Divider,
   CircularProgress,
-  Alert
+  Alert,
+  InputAdornment
 } from '@mui/material';
 import {
   Delete,
@@ -40,7 +41,9 @@ import {
   Close,
   Warning,
   Group,
-  Category
+  Category,
+  Visibility,
+  VisibilityOff
 } from '@mui/icons-material';
 
 const Dashboard = ({ user, setUser }) => {
@@ -61,6 +64,10 @@ const Dashboard = ({ user, setUser }) => {
   // Estado para nuevo rol
   const [newRole, setNewRole] = useState('');
 
+  // Estado para mostrar/ocultar contraseñas
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   // Estado para nuevo usuario
   const [newUser, setNewUser] = useState({
     name: '',
@@ -69,7 +76,9 @@ const Dashboard = ({ user, setUser }) => {
     project: '',
     task: '',
     status: 'Activo',
-    avatarColor: ''
+    avatarColor: '',
+    password: '',
+    confirmPassword: ''
   });
 
   // Token de autenticación
@@ -139,10 +148,33 @@ const Dashboard = ({ user, setUser }) => {
     return colors[Math.floor(Math.random() * colors.length)];
   }
 
+  // Validar contraseñas
+  const validatePasswords = (password, confirmPassword, isEditing = false) => {
+    if (!isEditing && !password) {
+      return 'La contraseña es requerida';
+    }
+    
+    if (password && password.length < 6) {
+      return 'La contraseña debe tener al menos 6 caracteres';
+    }
+    
+    if (password && password !== confirmPassword) {
+      return 'Las contraseñas no coinciden';
+    }
+    
+    return null;
+  };
+
   // Abrir modal para edición
   const handleOpenEditModal = (user) => {
-    setCurrentUser({ ...user });
+    setCurrentUser({ 
+      ...user, 
+      password: '', 
+      confirmPassword: '' 
+    });
     setOpenModal(true);
+    setShowPassword(false);
+    setShowConfirmPassword(false);
   };
 
   // Abrir modal para creación
@@ -155,9 +187,13 @@ const Dashboard = ({ user, setUser }) => {
       project: '',
       task: '',
       status: 'Activo',
-      avatarColor: getRandomColor()
+      avatarColor: getRandomColor(),
+      password: '',
+      confirmPassword: ''
     });
     setOpenModal(true);
+    setShowPassword(false);
+    setShowConfirmPassword(false);
   };
 
   // Abrir modal de roles
@@ -168,6 +204,8 @@ const Dashboard = ({ user, setUser }) => {
   // Cerrar modales
   const handleCloseModal = () => {
     setOpenModal(false);
+    setShowPassword(false);
+    setShowConfirmPassword(false);
   };
 
   const handleCloseDeleteModal = () => {
@@ -184,22 +222,44 @@ const Dashboard = ({ user, setUser }) => {
   const handleSave = async () => {
     try {
       if (currentUser) {
+        // Validar contraseñas para edición (solo si se proporciona)
+        const passwordError = validatePasswords(currentUser.password, currentUser.confirmPassword, true);
+        if (passwordError) {
+          setError(passwordError);
+          return;
+        }
+
+        // Preparar datos para actualización
+        const updateData = {
+          name: currentUser.name,
+          email: currentUser.email,
+          role: currentUser.role,
+          status: currentUser.status,
+        };
+
+        // Solo incluir contraseña si se proporcionó
+        if (currentUser.password) {
+          updateData.password = currentUser.password;
+        }
+
         // Actualizar usuario existente
         await fetchWithAuth(`/api/users/${currentUser.id}`, {
           method: 'PUT',
-          body: JSON.stringify({
-            name: currentUser.name,
-            email: currentUser.email,
-            role: currentUser.role,
-            status: currentUser.status,
-          }),
+          body: JSON.stringify(updateData),
         });
 
         // Actualizar estado local
         setUsers(users.map(user =>
-          user.id === currentUser.id ? currentUser : user
+          user.id === currentUser.id ? { ...currentUser, password: undefined, confirmPassword: undefined } : user
         ));
       } else {
+        // Validar contraseñas para creación (requerida)
+        const passwordError = validatePasswords(newUser.password, newUser.confirmPassword, false);
+        if (passwordError) {
+          setError(passwordError);
+          return;
+        }
+
         // Crear nuevo usuario
         const createdUser = await fetchWithAuth('/api/users', {
           method: 'POST',
@@ -209,6 +269,7 @@ const Dashboard = ({ user, setUser }) => {
             role: newUser.role,
             status: newUser.status,
             avatar_color: newUser.avatarColor,
+            password: newUser.password,
           }),
         });
 
@@ -217,13 +278,14 @@ const Dashboard = ({ user, setUser }) => {
           ...newUser,
           id: createdUser.id,
           role: createdUser.role,
+          password: undefined,
+          confirmPassword: undefined,
         };
         setUsers([...users, newUserWithFormat]);
       }
 
+      setError(null);
       setOpenModal(false);
-      // Recargar datos para mantener consistencia
-      // loadInitialData();
     } catch (err) {
       console.error('Error guardando usuario:', err);
       setError('Error al guardar el usuario');
@@ -412,6 +474,54 @@ const Dashboard = ({ user, setUser }) => {
                       <MenuItem value="En licencia">En licencia</MenuItem>
                     </Select>
                   </FormControl>
+                  
+                  {/* Campos de contraseña para edición */}
+                  <Typography variant="subtitle2" sx={{ mt: 2, mb: 1, color: 'text.secondary' }}>
+                    Cambiar Contraseña (opcional)
+                  </Typography>
+                  <TextField
+                    label="Nueva contraseña"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={currentUser.password}
+                    onChange={handleEditChange}
+                    fullWidth
+                    margin="normal"
+                    helperText="Deja vacío para mantener la contraseña actual"
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShowPassword(!showPassword)}
+                            edge="end"
+                          >
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                  <TextField
+                    label="Confirmar nueva contraseña"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={currentUser.confirmPassword}
+                    onChange={handleEditChange}
+                    fullWidth
+                    margin="normal"
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            edge="end"
+                          >
+                            {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      )
+                    }}
+                  />
                 </>
               ) : (
                 // Formulario de creación
@@ -481,6 +591,56 @@ const Dashboard = ({ user, setUser }) => {
                       <MenuItem value="En licencia">En licencia</MenuItem>
                     </Select>
                   </FormControl>
+                  
+                  {/* Campos de contraseña para creación */}
+                  <Typography variant="subtitle2" sx={{ mt: 2, mb: 1, color: 'text.secondary' }}>
+                    Configuración de Contraseña
+                  </Typography>
+                  <TextField
+                    label="Contraseña"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={newUser.password}
+                    onChange={handleCreateChange}
+                    fullWidth
+                    margin="normal"
+                    required
+                    helperText="Mínimo 6 caracteres"
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShowPassword(!showPassword)}
+                            edge="end"
+                          >
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                  <TextField
+                    label="Confirmar contraseña"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={newUser.confirmPassword}
+                    onChange={handleCreateChange}
+                    fullWidth
+                    margin="normal"
+                    required
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            edge="end"
+                          >
+                            {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      )
+                    }}
+                  />
                 </>
               )}
             </Stack>
